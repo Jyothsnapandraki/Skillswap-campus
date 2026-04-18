@@ -1,7 +1,7 @@
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
-import { useTheme } from "next-themes";
+import { useTheme } from "@/components/theme-provider";
 import { Moon, Sun, BookOpen, User as UserIcon, LogOut, Menu } from "lucide-react";
 import {
   DropdownMenu,
