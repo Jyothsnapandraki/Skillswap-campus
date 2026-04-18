@@ -3,20 +3,30 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: SkillSwap Campus API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: auth
+    description: Authentication operations
+  - name: users
+    description: User operations
+  - name: skillposts
+    description: Skill post operations
+  - name: swaprequests
+    description: Swap request operations
+  - name: stats
+    description: Dashboard statistics
+
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,7 +34,362 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /auth/signup:
+    post:
+      operationId: signup
+      tags: [auth]
+      summary: Create a new account
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SignupBody"
+      responses:
+        "201":
+          description: User created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: Email already exists
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/login:
+    post:
+      operationId: login
+      tags: [auth]
+      summary: Login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginBody"
+      responses:
+        "200":
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "401":
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/me:
+    get:
+      operationId: getMe
+      tags: [auth]
+      summary: Get current user
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Current user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /users/{id}:
+    get:
+      operationId: getUser
+      tags: [users]
+      summary: Get user by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: User found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+    put:
+      operationId: updateUser
+      tags: [users]
+      summary: Update user profile
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateUserBody"
+      responses:
+        "200":
+          description: User updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+
+  /skillposts:
+    get:
+      operationId: listSkillPosts
+      tags: [skillposts]
+      summary: List all skill posts
+      parameters:
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: category
+          in: query
+          schema:
+            type: string
+        - name: type
+          in: query
+          schema:
+            type: string
+            enum: [offer, request]
+        - name: userId
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of skill posts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SkillPost"
+
+    post:
+      operationId: createSkillPost
+      tags: [skillposts]
+      summary: Create a skill post
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateSkillPostBody"
+      responses:
+        "201":
+          description: Skill post created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SkillPost"
+
+  /skillposts/{id}:
+    get:
+      operationId: getSkillPost
+      tags: [skillposts]
+      summary: Get a skill post
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Skill post
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SkillPost"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+    put:
+      operationId: updateSkillPost
+      tags: [skillposts]
+      summary: Update a skill post
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateSkillPostBody"
+      responses:
+        "200":
+          description: Updated skill post
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SkillPost"
+
+    delete:
+      operationId: deleteSkillPost
+      tags: [skillposts]
+      summary: Delete a skill post
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /swaprequests:
+    get:
+      operationId: listSwapRequests
+      tags: [swaprequests]
+      summary: List swap requests for current user
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: direction
+          in: query
+          schema:
+            type: string
+            enum: [sent, received]
+      responses:
+        "200":
+          description: List of swap requests
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SwapRequest"
+
+    post:
+      operationId: createSwapRequest
+      tags: [swaprequests]
+      summary: Send a swap request
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateSwapRequestBody"
+      responses:
+        "201":
+          description: Request created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SwapRequest"
+
+  /swaprequests/{id}/status:
+    put:
+      operationId: updateSwapRequestStatus
+      tags: [swaprequests]
+      summary: Accept or reject a swap request
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateSwapRequestStatusBody"
+      responses:
+        "200":
+          description: Updated request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SwapRequest"
+
+  /stats/dashboard:
+    get:
+      operationId: getDashboardStats
+      tags: [stats]
+      summary: Get dashboard statistics for current user
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Dashboard stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardStats"
+
+  /stats/categories:
+    get:
+      operationId: getCategoryStats
+      tags: [stats]
+      summary: Get post counts by category
+      responses:
+        "200":
+          description: Category stats
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CategoryStat"
+
 components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
   schemas:
     HealthStatus:
       type: object
@@ -34,3 +399,281 @@ components:
       required:
         - status
 
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+      required:
+        - error
+
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        email:
+          type: string
+        college:
+          type: string
+        department:
+          type: string
+        bio:
+          type: string
+          nullable: true
+        avatarInitials:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - name
+        - email
+        - college
+        - department
+        - avatarInitials
+        - createdAt
+
+    SignupBody:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 2
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 6
+        college:
+          type: string
+          minLength: 2
+        department:
+          type: string
+          minLength: 2
+      required:
+        - name
+        - email
+        - password
+        - college
+        - department
+
+    LoginBody:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+      required:
+        - email
+        - password
+
+    AuthResponse:
+      type: object
+      properties:
+        token:
+          type: string
+        user:
+          $ref: "#/components/schemas/User"
+      required:
+        - token
+        - user
+
+    UpdateUserBody:
+      type: object
+      properties:
+        name:
+          type: string
+        college:
+          type: string
+        department:
+          type: string
+        bio:
+          type: string
+
+    SkillPost:
+      type: object
+      properties:
+        id:
+          type: integer
+        userId:
+          type: integer
+        title:
+          type: string
+        description:
+          type: string
+        category:
+          type: string
+        skillLevel:
+          type: string
+          enum: [beginner, intermediate, advanced]
+        type:
+          type: string
+          enum: [offer, request]
+        availability:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        user:
+          $ref: "#/components/schemas/User"
+      required:
+        - id
+        - userId
+        - title
+        - description
+        - category
+        - skillLevel
+        - type
+        - availability
+        - createdAt
+        - user
+
+    CreateSkillPostBody:
+      type: object
+      properties:
+        title:
+          type: string
+          minLength: 3
+        description:
+          type: string
+          minLength: 10
+        category:
+          type: string
+        skillLevel:
+          type: string
+          enum: [beginner, intermediate, advanced]
+        type:
+          type: string
+          enum: [offer, request]
+        availability:
+          type: string
+      required:
+        - title
+        - description
+        - category
+        - skillLevel
+        - type
+        - availability
+
+    UpdateSkillPostBody:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        category:
+          type: string
+        skillLevel:
+          type: string
+          enum: [beginner, intermediate, advanced]
+        type:
+          type: string
+          enum: [offer, request]
+        availability:
+          type: string
+
+    SwapRequest:
+      type: object
+      properties:
+        id:
+          type: integer
+        senderId:
+          type: integer
+        receiverId:
+          type: integer
+        skillPostId:
+          type: integer
+        message:
+          type: string
+          nullable: true
+        status:
+          type: string
+          enum: [pending, accepted, rejected]
+        createdAt:
+          type: string
+          format: date-time
+        sender:
+          $ref: "#/components/schemas/User"
+        receiver:
+          $ref: "#/components/schemas/User"
+        skillPost:
+          $ref: "#/components/schemas/SkillPost"
+      required:
+        - id
+        - senderId
+        - receiverId
+        - skillPostId
+        - status
+        - createdAt
+        - sender
+        - receiver
+        - skillPost
+
+    CreateSwapRequestBody:
+      type: object
+      properties:
+        receiverId:
+          type: integer
+        skillPostId:
+          type: integer
+        message:
+          type: string
+      required:
+        - receiverId
+        - skillPostId
+
+    UpdateSwapRequestStatusBody:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [accepted, rejected]
+      required:
+        - status
+
+    DashboardStats:
+      type: object
+      properties:
+        totalPosts:
+          type: integer
+        offeredSkills:
+          type: integer
+        requestedSkills:
+          type: integer
+        sentRequests:
+          type: integer
+        receivedRequests:
+          type: integer
+        pendingRequests:
+          type: integer
+        acceptedRequests:
+          type: integer
+      required:
+        - totalPosts
+        - offeredSkills
+        - requestedSkills
+        - sentRequests
+        - receivedRequests
+        - pendingRequests
+        - acceptedRequests
+
+    CategoryStat:
+      type: object
+      properties:
+        category:
+          type: string
+        count:
+          type: integer
+      required:
+        - category
+        - count
