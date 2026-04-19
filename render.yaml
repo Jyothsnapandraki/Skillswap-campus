@@ -1,0 +1,28 @@
+services:
+  # Backend Web Service
+  - type: web
+    name: skillswap-api
+    env: node
+    rootDir: apps/api-server
+    buildCommand: npx pnpm install && npx pnpm run build
+    startCommand: npx pnpm run start
+    envVars:
+      - key: PORT
+        value: 10000
+      - key: DATABASE_URL
+        sync: false # You will need to set this in the Render Dashboard
+      - key: SESSION_SECRET
+        sync: false # You will need to set this in the Render Dashboard
+
+  # Frontend Static Site
+  - type: static
+    name: skillswap-frontend
+    env: static
+    rootDir: apps/skillswap-campus
+    buildCommand: npx pnpm install && npx pnpm run build
+    publishDir: dist
+    envVars:
+      - key: SKIP_INSTALL_COMMAND
+        value: "true"
+      - key: VITE_API_URL
+        sync: false # You will need to set this to your Backend URL
